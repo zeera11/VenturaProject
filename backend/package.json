@@ -1,0 +1,22 @@
+{
+  "name": "ventura-app-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo containing Ventura frontend (Flutter) and backend (NestJS microservices)",
+  "scripts": {
+    "install:backend": "npm install --prefix backend/api-gateway && npm install --prefix backend/auth-service && npm install --prefix backend/finance-service && npm install --prefix backend/travel-service",
+    "install:frontend": "cd frontend && flutter pub get",
+    "install:all": "npm run install:backend && npm run install:frontend",
+    "start:gateway": "npm run start:dev --prefix backend/api-gateway",
+    "start:auth": "npm run start:dev --prefix backend/auth-service",
+    "start:finance": "npm run start:dev --prefix backend/finance-service",
+    "start:travel": "npm run start:dev --prefix backend/travel-service",
+    "start:backend": "concurrently -n \"gateway,auth,finance,travel\" -c \"blue,green,magenta,yellow\" \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:finance\" \"npm run start:travel\"",
+    "start:frontend:chrome": "cd frontend && flutter run -d chrome",
+    "start:frontend:windows": "cd frontend && flutter run -d windows",
+    "start:all:windows": "concurrently \"npm run start:backend\" \"npm run start:frontend:windows\"",
+    "start:all:chrome": "concurrently \"npm run start:backend\" \"npm run start:frontend:chrome\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

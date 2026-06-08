@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+package-lock.json
+
+# build
+build/
+dist/
+
+# env
+.env
+
+# flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# logs
+*.log
