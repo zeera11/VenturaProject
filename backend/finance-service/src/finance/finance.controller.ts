@@ -51,6 +51,12 @@ export class FinanceController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Delete('expenses/all')
+  clearExpenses(@Req() req: any) {
+    return this.financeService.clearExpenses(req.user.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('budget')
   addBudget(
     @Body() dto: CreateBudgetDto,

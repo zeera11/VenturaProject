@@ -9,7 +9,12 @@ import {
   Query,
   Headers,
   HttpException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -41,10 +46,41 @@ export class GatewayController {
   }
 
   @Post('auth/register')
-  async register(@Body() dto: any) {
+  @UseInterceptors(
+    FileInterceptor('profilePicture', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  async register(@UploadedFile() file: any, @Body() dto: any) {
+    try {
+      const payload = { ...dto };
+      if (file) {
+        payload.profilePicture = file.filename;
+      }
+      const res = await firstValueFrom(
+        this.httpService.post(`${AUTH_SERVICE}/auth/register`, payload),
+      );
+      return res.data;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Internal Server Error',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  @Post('auth/reset-password')
+  async resetPassword(@Body() dto: any) {
     try {
       const res = await firstValueFrom(
-        this.httpService.post(`${AUTH_SERVICE}/auth/register`, dto),
+        this.httpService.post(`${AUTH_SERVICE}/auth/reset-password`, dto),
       );
       return res.data;
     } catch (error) {
@@ -73,13 +109,30 @@ export class GatewayController {
   }
 
   @Put('auth/profile')
+  @UseInterceptors(
+    FileInterceptor('profilePicture', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
   async updateProfile(
+    @UploadedFile() file: any,
     @Body() dto: any,
     @Headers('authorization') authorization: string,
   ) {
     try {
+      const payload = { ...dto };
+      if (file) {
+        payload.profilePicture = file.filename;
+      }
       const res = await firstValueFrom(
-        this.httpService.put(`${AUTH_SERVICE}/auth/profile`, dto, {
+        this.httpService.put(`${AUTH_SERVICE}/auth/profile`, payload, {
           headers: { Authorization: authorization },
         }),
       );
@@ -142,6 +195,23 @@ export class GatewayController {
     try {
       const res = await firstValueFrom(
         this.httpService.delete(`${FINANCE_SERVICE}/finance/expense/${id}`, {
+          headers: { Authorization: authorization },
+        }),
+      );
+      return res.data;
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Internal Server Error',
+        error.response?.status || 500,
+      );
+    }
+  }
+
+  @Delete('finance/expenses/all')
+  async clearExpenses(@Headers('authorization') authorization: string) {
+    try {
+      const res = await firstValueFrom(
+        this.httpService.delete(`${FINANCE_SERVICE}/finance/expenses/all`, {
           headers: { Authorization: authorization },
         }),
       );
@@ -348,5 +418,27 @@ export class GatewayController {
         error.response?.status || 500,
       );
     }
+  }
+
+  @Post('travel/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `dest-${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  )
+  uploadFile(@UploadedFile() file: any) {
+    if (!file) {
+      throw new HttpException('File upload failed', 400);
+    }
+    return {
+      filename: file.filename,
+    };
   }
 }

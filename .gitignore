@@ -21,4 +21,14 @@ build/
 
 # credentials
 serviceAccountKey.json
-*serviceAccountKey.json
+*serviceAccountKey.json
+google-services.json
+GoogleService-Info.plist
+*.jks
+*.keystore
+
+# uploads
+uploads/
+**/uploads/
+**/dist/
+**/node_modules/

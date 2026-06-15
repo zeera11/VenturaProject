@@ -53,6 +53,19 @@ export class FinanceService {
     return { message: 'Expense deleted' };
   }
 
+  async clearExpenses(userId: string) {
+    const existing = await db
+      .collection('expenses')
+      .where('userId', '==', userId)
+      .get();
+
+    const batch = db.batch();
+    existing.docs.forEach((doc) => batch.delete(doc.ref));
+    await batch.commit();
+
+    return { message: 'All expenses cleared' };
+  }
+
   async addBudget(dto: any, userId: string) {
     // Hapus budget lama user jika ada (hanya satu budget aktif per user)
     const existing = await db

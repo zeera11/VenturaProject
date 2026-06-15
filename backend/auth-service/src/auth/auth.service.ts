@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { db } from '../config/firebase.config';
@@ -11,12 +11,17 @@ export class AuthService {
   constructor(private jwtService: JwtService) {}
 
   async register(dto: RegisterDto) {
+    if (dto.email && dto.email.toLowerCase().includes('gamil.com')) {
+      throw new BadRequestException('Invalid email domain: gamil.com is not allowed. Did you mean gmail.com?');
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const userData = {
       email: dto.email,
       username: dto.username,
       password: hashedPassword,
       phoneNumber: '',
+      profilePicture: dto.profilePicture || '',
     };
 
     const existing = await db
@@ -25,10 +30,7 @@ export class AuthService {
       .get();
 
     if (!existing.empty) {
-      return {
-        statusCode: 400,
-        message: 'Email already registered',
-      };
+      throw new BadRequestException('Email already registered');
     }
 
     await db.collection('users').add(userData);
@@ -48,9 +50,7 @@ export class AuthService {
       .get();
 
     if (snapshot.empty) {
-      return {
-        message: 'User not found',
-      };
+      throw new NotFoundException('User not found');
     }
 
     const userDoc = snapshot.docs[0];
@@ -58,9 +58,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
-      return {
-        message: 'Invalid credentials',
-      };
+      throw new BadRequestException('Invalid credentials');
     }
 
     const payload = {
@@ -86,6 +84,7 @@ export class AuthService {
       username: data.username,
       email: data.email,
       phoneNumber: data.phoneNumber || '',
+      profilePicture: data.profilePicture || '',
     };
   }
 
@@ -100,6 +99,7 @@ export class AuthService {
     if (dto.username !== undefined) updateData.username = dto.username;
     if (dto.email !== undefined) updateData.email = dto.email;
     if (dto.phoneNumber !== undefined) updateData.phoneNumber = dto.phoneNumber;
+    if (dto.profilePicture !== undefined) updateData.profilePicture = dto.profilePicture;
 
     await docRef.update(updateData);
     const updated = await docRef.get();
@@ -111,7 +111,27 @@ export class AuthService {
         username: updatedData.username,
         email: updatedData.email,
         phoneNumber: updatedData.phoneNumber || '',
+        profilePicture: updatedData.profilePicture || '',
       },
+    };
+  }
+
+  async resetPassword(email: string, newPassword: string) {
+    const snapshot = await db
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    if (snapshot.empty) {
+      throw new NotFoundException('User with this email not found');
+    }
+
+    const userDoc = snapshot.docs[0];
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await userDoc.ref.update({ password: hashedPassword });
+
+    return {
+      message: 'Password updated successfully',
     };
   }
 }

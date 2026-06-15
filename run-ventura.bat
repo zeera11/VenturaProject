@@ -37,7 +37,7 @@ if not exist node_modules (
 if not exist backend\api-gateway\node_modules (
     echo [INFO] Backend dependencies not found. Installing dependencies...
     call npm run install:all
-) else if not exist frontend\.dart_tool (
+) else if not exist VenturaProject-frontend\.dart_tool (
     echo [INFO] Frontend packages not found. Fetching flutter packages...
     call npm run install:frontend
 )
