@@ -19,9 +19,9 @@ import { extname } from 'path';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-const AUTH_SERVICE = 'http://localhost:3001';
-const FINANCE_SERVICE = 'http://localhost:3002';
-const TRAVEL_SERVICE = 'http://localhost:3003';
+const AUTH_SERVICE = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
+const FINANCE_SERVICE = process.env.FINANCE_SERVICE_URL || 'http://localhost:3002';
+const TRAVEL_SERVICE = process.env.TRAVEL_SERVICE_URL || 'http://localhost:3003';
 
 @Controller()
 export class GatewayController {
